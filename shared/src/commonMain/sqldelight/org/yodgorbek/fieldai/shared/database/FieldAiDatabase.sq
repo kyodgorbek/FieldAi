@@ -1,0 +1,129 @@
+CREATE TABLE UserEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    avatarUrl TEXT
+);
+
+CREATE TABLE ConversationEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
+CREATE TABLE MessageEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    conversationId TEXT NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    FOREIGN KEY(conversationId) REFERENCES ConversationEntity(id) ON DELETE CASCADE
+);
+
+CREATE TABLE DocumentEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    summary TEXT,
+    localPath TEXT,
+    remoteUrl TEXT,
+    createdAt INTEGER NOT NULL,
+    isSynced INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE ContactEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    organization TEXT,
+    email TEXT,
+    phone TEXT,
+    isSynced INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE CalendarEventEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    startTime INTEGER NOT NULL,
+    endTime INTEGER NOT NULL,
+    location TEXT
+);
+
+CREATE TABLE NotificationEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    isRead INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE DeviceEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    macAddress TEXT NOT NULL,
+    lastConnected INTEGER NOT NULL
+);
+
+CREATE TABLE PendingOperationEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    type TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    createdAt INTEGER NOT NULL,
+    retryCount INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE SyncMetadataEntity (
+    key TEXT NOT NULL PRIMARY KEY,
+    lastSyncedAt INTEGER NOT NULL
+);
+
+-- Queries for Conversation
+insertConversation:
+INSERT OR REPLACE INTO ConversationEntity(id, title, createdAt, updatedAt)
+VALUES (?, ?, ?, ?);
+
+getAllConversations:
+SELECT * FROM ConversationEntity ORDER BY updatedAt DESC;
+
+getConversationById:
+SELECT * FROM ConversationEntity WHERE id = ?;
+
+deleteConversation:
+DELETE FROM ConversationEntity WHERE id = ?;
+
+-- Queries for Message
+insertMessage:
+INSERT OR REPLACE INTO MessageEntity(id, conversationId, role, content, timestamp)
+VALUES (?, ?, ?, ?, ?);
+
+getMessagesForConversation:
+SELECT * FROM MessageEntity WHERE conversationId = ? ORDER BY timestamp ASC;
+
+-- Queries for PendingOperation
+insertPendingOperation:
+INSERT OR REPLACE INTO PendingOperationEntity(id, type, payload, createdAt, retryCount)
+VALUES (?, ?, ?, ?, ?);
+
+getPendingOperations:
+SELECT * FROM PendingOperationEntity ORDER BY createdAt ASC;
+
+deletePendingOperation:
+DELETE FROM PendingOperationEntity WHERE id = ?;
+
+incrementRetryCount:
+UPDATE PendingOperationEntity SET retryCount = retryCount + 1 WHERE id = ?;
+
+-- Queries for Document
+insertDocument:
+INSERT OR REPLACE INTO DocumentEntity(id, title, summary, localPath, remoteUrl, createdAt, isSynced)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+getAllDocuments:
+SELECT * FROM DocumentEntity ORDER BY createdAt DESC;
+
+-- Queries for SyncMetadata
+getSyncMetadata:
+SELECT lastSyncedAt FROM SyncMetadataEntity WHERE key = ?;
+
+updateSyncMetadata:
+INSERT OR REPLACE INTO SyncMetadataEntity(key, lastSyncedAt) VALUES (?, ?);

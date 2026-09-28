@@ -1,0 +1,38 @@
+name: FieldAI KMP Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Run KMP Shared Tests
+        run: ./gradlew :shared:testDebugUnitTest
+
+      - name: Build Android App
+        run: ./gradlew :androidApp:assembleDebug
+
+      - name: Build iOS Framework
+        run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
